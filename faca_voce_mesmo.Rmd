@@ -1,0 +1,123 @@
+*** Tratar dados 'tempo.csv'
+Aparência: sol, nublado, chuva
+Temperatura: entre -130 e 130 (-130 ~ 130)
+Umidade: 0 ~ 100
+Jogar: sim/nao
+
+Tratar valores Nas
+
+```{r}
+
+# lendo, exibindo e alterando para Nas dados faltantes
+dados_temp = read.csv("tempo.csv", sep = ";", na.strings="", stringsAsFactors=T)
+dados_temp
+
+# exibindo resumo
+summary(dados_temp)
+
+```
+```{r}
+
+# explorando dados categóricos ("aparencia")
+
+counts_aparencia = table(dados_temp$Aparencia)
+barplot(counts_aparencia, main="Aparência da Temperatura", xlab="Aparência")
+
+# foi verificado que em "Aparência" tem um campo com "menos"
+
+```
+
+```{r}
+
+# tratar valores de Aparencia
+
+unique(dados_temp$Aparencia)
+summary(dados_temp$Aparencia)
+
+# chuva e sol possuem 5, neste caso tantos faz escolhquer qual vai atribuir para o 'menos'
+dados_temp[dados_temp$Aparencia == "menos", ]$Aparencia = "sol"
+
+summary(dados_temp$Aparencia)
+
+# removendo o level 'menos'
+dados_temp$Aparencia = factor(dados_temp$Aparencia)
+
+summary(dados_temp$Aparencia)
+
+```
+
+```{r}
+
+# tratar valores de temperatura
+unique(dados_temp$Temperatura)
+summary(dados_temp$Temperatura)
+
+# exbindo as linhas os temperaturas abaixo de 130 e maior que 130
+dados_temp[dados_temp$Temperatura < -130 | dados_temp$Temperatura > 130, ]
+dados_temp[dados_temp$Temperatura < -130 | dados_temp$Temperatura > 130, ]$Temperatura
+
+# checando se tem valores Nas em Tempratura
+dados_temp[is.na(dados_temp$Temperatura), ]
+
+# calculando a mediana
+median(dados_temp$Temperatura)
+
+# preencher temperaturas anormais com a mediana
+dados_temp[dados_temp$Temperatura < -130 | dados_temp$Temperatura > 130, ]$Temperatura = median(dados_temp$Temperatura)
+
+# verificando novamente se tem temperatura com valor anormal
+dados_temp[dados_temp$Temperatura < -130 | dados_temp$Temperatura > 130, ]$Temperatura
+
+summary(dados_temp$Temperatura)
+
+```
+```{r}
+
+# tratando Umidade
+
+summary(dados_temp$Umidade)
+
+# exbindo as linhas os umidade abaixo de 0 e maior que 100
+dados_temp[dados_temp$Umidade < 0 | dados_temp$Umidade > 100, ]
+dados_temp[dados_temp$Umidade < 0 | dados_temp$Umidade > 100, ]$Umidade
+
+# checando se tem NA (tem 1 valor NA)
+dados_temp[is.na(dados_temp$Umidade), ]
+
+# calculando a mediana
+median(dados_temp$Umidade, na.rm = T)
+
+# subistuindo valor NA pela mediana
+dados_temp[is.na(dados_temp$Umidade),]$Umidade = median(dados_temp$Umidade, na.rm = T)
+
+# checando novamente se tem NA (tem 1 valor NA)
+dados_temp[is.na(dados_temp$Umidade), ]
+
+# substituindo valor umidade anormal para mediana
+dados_temp[dados_temp$Umidade < 0 | dados_temp$Umidade > 100, ]$Umidade = median(dados_temp$Umidade, na.rm = T)
+
+summary(dados_temp$Umidade)
+
+```
+```{r}
+
+# tratando valor Na em 'Vento'
+
+# checando NA em vento
+dados_temp[!complete.cases(dados_temp$Vento), ]
+
+summary(dados_temp$Vento)
+
+# atribuindo valor NA para "FALSO'
+dados_temp[is.na(dados_temp$Vento), ]$Vento = "FALSO"
+
+# checando novamente
+dados_temp[is.na(dados_temp$Vento), ]$Vento
+
+summary(dados_temp$Vento)
+
+```
+
+
+
+
