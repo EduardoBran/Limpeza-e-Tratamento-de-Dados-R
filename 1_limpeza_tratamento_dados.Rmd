@@ -1,0 +1,235 @@
+---
+Limpeza e Tratamento de Dados
+---
+
+```{r}
+
+#importa dados, string vazio como NA (sep), string como fatores (stringAsFactors)
+
+# dados vazios ("") estão definidos para serem do tipo NA porque o R tem uma série de facilidades para tratar dados NA
+
+dados = read.csv("Churn.csv", sep = ";", na.strings="", stringsAsFactors=T)
+head(dados)
+summary(dados)
+
+```
+
+
+```{r}
+
+# dar nomes corretos para as colunas
+
+colnames(dados) = c("Id", "Score", "Estado", "Genero", "Idade", "Patrimônio", "Saldo", "Produtos", "TemCartCredito", "Ativo", "Salario", "Saiu")
+
+head(dados)
+
+```
+
+```{r}
+
+# explorar dados - colunas categóricas (estado, genero)
+
+# Estados
+counts_estados = table(dados$Estado) # table cria um summary e conta a qtd
+barplot(counts_estados, main="Estados", xlab="Estados") # gera o grafico
+
+# Gênero
+counts_genero = table(dados$Genero)
+barplot(counts_genero, main="Gêneros", xlab="Gêneros")
+
+# em genero foi veficiado que tem 'f', 'fem', 'feminino', 'm' e 'masculino'
+
+```
+
+```{r}
+
+# explorar dados - colunas numéricas
+
+# Score (avaliação da capacidade do cliente de conseguir empréstimos)
+summary(dados$Score)
+boxplot(dados$Score)
+hist(dados$Score)
+
+```
+
+```{r}
+
+# Idade
+summary(dados$Idade)
+boxplot(dados$Idade)
+hist(dados$Idade)
+
+```
+
+```{r}
+
+# Saldo
+summary(dados$Saldo)
+boxplot(dados$Saldo)
+hist(dados$Saldo)
+
+```
+
+
+```{r}
+
+# Valores faltantes (NAs)
+dados[!complete.cases(dados),] # exibe todas as linhas com NAs
+
+# aqui verificamos que as colunas com NA são Genero e Salário
+
+```
+
+
+```{r}
+
+# tratar Salários (alguns campos estão como NA)
+summary(dados$Salario)
+
+# uma forma mais usual de tratar dados numéricos NA é utilizando a mediana.
+# para dados categórigos se utiliza o valor mais frequente
+
+median(dados$Salario, na.rm = T) # na.rm remove valores NA
+
+# substituir valores NA pela mediana
+
+dados[is.na(dados$Salario),]$Salario = median(dados$Salario, na.rm = T)
+
+# buscar NAs em salario para checar
+
+dados[!complete.cases(dados$Salario),]
+
+```
+
+```{r}
+
+# Tratando a falta de padronização de genero
+
+# retorna todos os tipos de valores em genero
+unique(dados$Genero)
+
+# retorna o resumo (quantos dados tem F, Fem, Feminino...)
+summary(dados$Genero)
+
+# transformando todos os dados Nas e M em 'Masculino"
+# dados em Nas foram transformados em Masculino pq como visto em summary, existem mais dados em Masculino
+dados[is.na(dados$Genero) | dados$Genero == "M", ]$Genero = "Masculino"
+
+# transformando todos os dados 'F' e 'Fem' em 'Feminino'
+dados[dados$Genero == "F" | dados$Genero == "Fem", ]$Genero = "Feminino"
+
+# ver resultado
+summary(dados$Genero)
+
+# remover levels não utilizados ("F", "Fem, "M")
+dados$Genero = factor(dados$Genero)
+
+# visualizar novamente
+summary(dados$Genero)
+
+```
+
+```{r}
+
+# Idade fora do domínio
+
+# verificando resumo do campo Idade
+summary(dados$Idade)
+
+# verificando as idades fora do domínio (idades anormais)
+
+# exibe as linhas onde tem as idades menor que 0 e acima de 110
+dados[dados$Idade<0 | dados$Idade>110, ]
+
+#exibe somente os valores que tem menos que 0 e acima de 110
+dados[dados$Idade<0 | dados$Idade>110, ]$Idade
+
+# checando se Idades tem valores Nas
+dados[is.na(dados$Idade), ]
+
+# calculando a mediana
+median(dados$Idade)
+
+# preencher idades anormais com a mediana
+dados[dados$Idade<0 | dados$Idade>110, ]$Idade = median(dados$Idade)
+
+# verificando novamente se tem idades anormais
+dados[dados$Idade<0 | dados$Idade>110, ]
+
+# verificando novamente resumo do campo Idade
+summary(dados$Idade)
+
+```
+
+```{r}
+
+# buscar duplicados pelo ID
+x = dados[duplicated(dados$Id) ,]  # existem dois registros de id 81
+
+# exibe a linha que esta o registro duplicado
+x 
+
+# vamos excluir pelo índice da linha
+dados = dados[-c(82), ]
+
+# buscando novamente duplicados pelo ID
+x = dados[duplicated(dados$Id) ,]
+x
+
+```
+
+```{r}
+
+# Estados fora do domínio 
+
+unique(dados$Estado)
+summary(dados$Estado) # dados fora do domínio "RP", "SP" e "TD"
+
+# preencher esses dados fora do domínio com "RS" (maior qtd)
+# onde os dados não forem "PR", "RS ou "SC" vão ser "RS"
+dados[!dados$Estado %in% c("RS", "SC", "PR"), ]$Estado = "RS"
+
+summary(dados$Estado)
+
+# removendo fatores nao usados ("RP", "SP, "TD")
+dados$Estado = factor(dados$Estado)
+
+# visualizar novamente
+summary(dados$Estado)
+
+```
+
+```{r}
+
+# Outliers (valores fora do padrão)
+# Isso é uma questão que depende do domínio do negócio
+
+# Aqui vamos criar uma métrica para definir se o salário está fora do padrão
+# Estando fora do padrão, a gente o substitui pela mediana
+
+# Utilizaremos a métrica -> se o salário for 2x maior que o desvio padrão do próprio salário
+
+# Calculando o desvio padrão
+desv = sd(dados$Salario, na.rm=T)
+desv
+
+# verificando quais salários estão 2x maior que o desvio padrão
+dados[dados$Salario >= 2 * desv , ]$Salario
+
+# verificando quais salários estão 2x maior que o desvio padrão utilizando boxplot (a vantagem é que se tem NAs, ele trata da mesma forma)
+boxplot(dados$Salario)
+boxplot(dados$Salario, outline = F)
+x = boxplot(dados$Salario)$out
+x
+
+# calculando a mediana
+median(dados$Salario)
+
+# atualizando todos os dados maior que o desvio para a mediana
+dados[dados$Salario >= 2 * desv , ]$Salario = median(dados$Salario)
+
+# checando se ainda tem valores outliers
+dados[dados$Salario >= 2 * desv, ]$Salario
+
+```
+
